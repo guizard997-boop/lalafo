@@ -1,5 +1,6 @@
 import aiohttp
 from bs4 import BeautifulSoup
+import re
 
 
 BAD_WORDS = [
@@ -8,21 +9,26 @@ BAD_WORDS = [
     "кран",
     "погрузчик",
     "бульдозер",
-    "спецтехника"
+    "спецтехника",
+    "самосвал"
+]
+
+
+CUSTOMS_WORDS = [
+    "растаможен",
+    "растаможена",
+    "растаможка",
+    "кыргызстан",
+    "кг"
 ]
 
 
 async def get_lalafo_cars():
 
-    url = (
-        "https://lalafo.kg/"
-        "kyrgyzstan/avtomobili"
-    )
-
+    url = "https://lalafo.kg/kyrgyzstan/avtomobili"
 
     headers = {
-        "User-Agent":
-        "Mozilla/5.0"
+        "User-Agent": "Mozilla/5.0"
     }
 
 
@@ -34,7 +40,6 @@ async def get_lalafo_cars():
         ) as response:
 
             html = await response.text()
-
 
 
     soup = BeautifulSoup(
@@ -57,7 +62,10 @@ async def get_lalafo_cars():
             continue
 
 
-        if check_car(title):
+        price = get_price(title)
+
+
+        if is_car(title):
 
             cars.append({
 
@@ -65,7 +73,7 @@ async def get_lalafo_cars():
 
                 "link": link,
 
-                "price": 0
+                "price": price
 
             })
 
@@ -74,16 +82,51 @@ async def get_lalafo_cars():
 
 
 
-def check_car(title):
+def is_car(text):
 
-    text = title.lower()
+    text = text.lower()
 
 
     for word in BAD_WORDS:
 
         if word in text:
-
             return False
 
 
     return True
+
+
+
+def has_customs(text):
+
+    text = text.lower()
+
+
+    for word in CUSTOMS_WORDS:
+
+        if word in text:
+            return True
+
+
+    return False
+
+
+
+def get_price(text):
+
+    numbers = re.findall(
+        r'\d+',
+        text
+    )
+
+
+    if not numbers:
+        return 0
+
+
+    price = int(
+        numbers[0]
+    )
+
+
+    return price
