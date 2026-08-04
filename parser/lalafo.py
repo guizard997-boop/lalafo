@@ -3,33 +3,28 @@ from bs4 import BeautifulSoup
 
 
 BAD_WORDS = [
-    "экскаватор",
     "трактор",
-    "погрузчик",
+    "экскаватор",
     "кран",
+    "погрузчик",
     "бульдозер",
-    "спецтехника",
-    "самосвал"
-]
-
-
-GOOD_WORDS = [
-    "растаможен",
-    "растаможена",
-    "растаможка",
-    "кыргызстан",
-    "кг"
+    "спецтехника"
 ]
 
 
 async def get_lalafo_cars():
 
-    url = "https://lalafo.kg/kyrgyzstan/avtomobili"
+    url = (
+        "https://lalafo.kg/"
+        "kyrgyzstan/avtomobili"
+    )
+
 
     headers = {
         "User-Agent":
         "Mozilla/5.0"
     }
+
 
     async with aiohttp.ClientSession() as session:
 
@@ -41,6 +36,7 @@ async def get_lalafo_cars():
             html = await response.text()
 
 
+
     soup = BeautifulSoup(
         html,
         "html.parser"
@@ -49,9 +45,6 @@ async def get_lalafo_cars():
 
     cars = []
 
-
-    # Временно пример структуры.
-    # После проверки сайта подставим реальные классы Lalafo.
 
     for item in soup.find_all("a"):
 
@@ -64,13 +57,15 @@ async def get_lalafo_cars():
             continue
 
 
-        if is_car(title):
+        if check_car(title):
 
             cars.append({
 
                 "title": title,
 
-                "link": link
+                "link": link,
+
+                "price": 0
 
             })
 
@@ -79,12 +74,10 @@ async def get_lalafo_cars():
 
 
 
-def is_car(title):
+def check_car(title):
 
     text = title.lower()
 
-
-    # убираем спецтехнику
 
     for word in BAD_WORDS:
 
@@ -93,21 +86,4 @@ def is_car(title):
             return False
 
 
-
     return True
-
-
-
-def has_kg_customs(text):
-
-    text = text.lower()
-
-
-    for word in GOOD_WORDS:
-
-        if word in text:
-
-            return True
-
-
-    return False
