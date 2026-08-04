@@ -14,9 +14,19 @@ BAD_WORDS = [
 ]
 
 
+CUSTOMS_WORDS = [
+    "растаможен",
+    "растаможена",
+    "растаможка",
+    "кыргызстан",
+    "кг"
+]
+
+
 async def get_lalafo_cars():
 
     url = "https://lalafo.kg/kyrgyzstan/avtomobili"
+
 
     headers = {
         "User-Agent": "Mozilla/5.0"
@@ -33,7 +43,6 @@ async def get_lalafo_cars():
             html = await response.text()
 
 
-
     soup = BeautifulSoup(
         html,
         "html.parser"
@@ -43,18 +52,16 @@ async def get_lalafo_cars():
     cars = []
 
 
-    links = soup.find_all(
+    for item in soup.find_all(
         "a",
         href=True
-    )
-
-
-    for item in links:
+    ):
 
         title = item.get_text(
             " ",
             strip=True
         )
+
 
         link = item["href"]
 
@@ -68,11 +75,23 @@ async def get_lalafo_cars():
         )
 
 
+        customs = check_customs(
+            title
+        )
+
+
+        photo = get_photo(
+            item
+        )
+
+
         if price == 0:
             continue
 
 
+
         if not link.startswith("http"):
+
             link = (
                 "https://lalafo.kg"
                 +
@@ -88,7 +107,9 @@ async def get_lalafo_cars():
 
             "link": link,
 
-            "photo": None
+            "photo": photo,
+
+            "customs": customs
 
         })
 
@@ -113,6 +134,22 @@ def is_car(title):
 
 
 
+def check_customs(text):
+
+    text = text.lower()
+
+
+    for word in CUSTOMS_WORDS:
+
+        if word in text:
+
+            return True
+
+
+    return False
+
+
+
 def extract_price(text):
 
     numbers = re.findall(
@@ -122,19 +159,35 @@ def extract_price(text):
 
 
     if not numbers:
+
         return 0
-
-
-    price = (
-        numbers[0]
-        .replace(" ", "")
-    )
 
 
     try:
 
-        return int(price)
+        return int(
+            numbers[0]
+            .replace(" ", "")
+        )
 
     except:
 
-        return 0 
+        return 0
+
+
+
+def get_photo(item):
+
+    image = item.find(
+        "img"
+    )
+
+
+    if image:
+
+        return image.get(
+            "src"
+        )
+
+
+    return None
