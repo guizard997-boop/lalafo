@@ -14,15 +14,6 @@ BAD_WORDS = [
 ]
 
 
-CUSTOMS_WORDS = [
-    "растаможен",
-    "растаможена",
-    "растаможка",
-    "кыргызстан",
-    "кг"
-]
-
-
 async def get_lalafo_cars():
 
     url = "https://lalafo.kg/kyrgyzstan/avtomobili"
@@ -42,6 +33,7 @@ async def get_lalafo_cars():
             html = await response.text()
 
 
+
     soup = BeautifulSoup(
         html,
         "html.parser"
@@ -51,45 +43,69 @@ async def get_lalafo_cars():
     cars = []
 
 
-    for item in soup.find_all("a"):
+    links = soup.find_all(
+        "a",
+        href=True
+    )
 
-        title = item.text.strip()
 
-        link = item.get("href")
+    for item in links:
+
+        title = item.get_text(
+            " ",
+            strip=True
+        )
+
+        link = item["href"]
 
 
-        if not title or not link:
+        if not is_car(title):
             continue
 
 
-        price = get_price(title)
+        price = extract_price(
+            title
+        )
 
 
-        if is_car(title):
+        if price == 0:
+            continue
 
-            cars.append({
 
-                "title": title,
+        if not link.startswith("http"):
+            link = (
+                "https://lalafo.kg"
+                +
+                link
+            )
 
-                "link": link,
 
-                "price": price
+        cars.append({
 
-            })
+            "title": title,
+
+            "price": price,
+
+            "link": link,
+
+            "photo": None
+
+        })
 
 
     return cars
 
 
 
-def is_car(text):
+def is_car(title):
 
-    text = text.lower()
+    text = title.lower()
 
 
     for word in BAD_WORDS:
 
         if word in text:
+
             return False
 
 
@@ -97,25 +113,10 @@ def is_car(text):
 
 
 
-def has_customs(text):
-
-    text = text.lower()
-
-
-    for word in CUSTOMS_WORDS:
-
-        if word in text:
-            return True
-
-
-    return False
-
-
-
-def get_price(text):
+def extract_price(text):
 
     numbers = re.findall(
-        r'\d+',
+        r'\d[\d\s]*',
         text
     )
 
@@ -124,9 +125,16 @@ def get_price(text):
         return 0
 
 
-    price = int(
+    price = (
         numbers[0]
+        .replace(" ", "")
     )
 
 
-    return price
+    try:
+
+        return int(price)
+
+    except:
+
+        return 0 
