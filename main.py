@@ -5,6 +5,7 @@ from aiogram import Bot, Dispatcher
 from config import BOT_TOKEN
 from parser.lalafo import get_lalafo_cars
 from database import is_new, save_car
+from analyzer import is_good_offer
 
 
 bot = Bot(BOT_TOKEN)
@@ -12,28 +13,32 @@ bot = Bot(BOT_TOKEN)
 dp = Dispatcher()
 
 
-# ВСТАВЬ СЮДА СВОЙ TELEGRAM ID
-YOUR_CHAT_ID = 8078921787
+# Вставь сюда свой Telegram ID
+YOUR_CHAT_ID = 123456789
 
 
-async def send_car(car):
+async def send_car(car, discount):
 
     text = f"""
 🚗 Найден автомобиль
 
 {car['title']}
 
+💰 Цена:
+{car['price']} сом
+
+📉 Ниже рынка:
+{discount}%
+
 🔗 Ссылка:
 {car['link']}
-
-📊 Анализ:
-Проверка цены выполняется...
 """
 
     await bot.send_message(
         YOUR_CHAT_ID,
         text
     )
+
 
 
 async def check_cars():
@@ -51,14 +56,39 @@ async def check_cars():
                 if is_new(car["link"]):
 
 
-                    await send_car(car)
+                    # Временно пример.
+                    # В Блоке 5 заменим на настоящий анализ рынка.
+
+                    market_price = 1500000
 
 
-                    save_car(
-                        car["link"],
-                        car["title"],
-                        0
-                    )
+                    if is_good_offer(
+                        car["price"],
+                        market_price
+                    ):
+
+
+                        discount = round(
+                            (
+                                (market_price - car["price"])
+                                /
+                                market_price
+                            ) * 100,
+                            1
+                        )
+
+
+                        await send_car(
+                            car,
+                            discount
+                        )
+
+
+                        save_car(
+                            car["link"],
+                            car["title"],
+                            car["price"]
+                        )
 
 
         except Exception as e:
@@ -88,6 +118,4 @@ async def main():
 
 if __name__ == "__main__":
 
-    asyncio.run(
-        main()
-    )
+    asyncio.run(main())
