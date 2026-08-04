@@ -31,7 +31,7 @@ async def send_car(car):
 """
 
     await bot.send_message(
-        YOUR_CHAT_ID,
+        YOUR_CHAT_ID = 8078921787
         text
     )
 
