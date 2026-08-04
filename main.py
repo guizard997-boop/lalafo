@@ -3,36 +3,43 @@ import asyncio
 from aiogram import Bot, Dispatcher
 
 from config import BOT_TOKEN
+
 from parser.lalafo import get_lalafo_cars
+
+from parser.market import get_market_price
+
+from analyzer import is_good_offer, discount_percent
+
 from database import is_new, save_car
-from analyzer import is_good_offer
 
 
-bot = Bot(BOT_TOKEN)
+
+bot = Bot(
+    BOT_TOKEN
+)
+
 
 dp = Dispatcher()
 
 
-# Вставь сюда свой Telegram ID
+
 YOUR_CHAT_ID = 123456789
+
 
 
 async def send_car(car, discount):
 
     text = f"""
-🚗 Найден автомобиль
+🚗 Автомобиль найден
 
 {car['title']}
-
-💰 Цена:
-{car['price']} сом
 
 📉 Ниже рынка:
 {discount}%
 
-🔗 Ссылка:
-{car['link']}
+🔗 {car['link']}
 """
+
 
     await bot.send_message(
         YOUR_CHAT_ID,
@@ -45,61 +52,62 @@ async def check_cars():
 
     while True:
 
-        try:
-
-            cars = await get_lalafo_cars()
+        cars = await get_lalafo_cars()
 
 
-            for car in cars:
+        prices = []
 
 
-                if is_new(car["link"]):
+        for car in cars:
+
+            if car["price"]:
+
+                prices.append(
+                    car["price"]
+                )
 
 
-                    # Временно пример.
-                    # В Блоке 5 заменим на настоящий анализ рынка.
+        market_price = get_market_price(
+            prices
+        )
 
-                    market_price = 1500000
+
+        for car in cars:
 
 
-                    if is_good_offer(
+            if is_new(
+                car["link"]
+            ):
+
+
+                if is_good_offer(
+                    car["price"],
+                    market_price
+                ):
+
+
+                    discount = discount_percent(
                         car["price"],
                         market_price
-                    ):
+                    )
 
 
-                        discount = round(
-                            (
-                                (market_price - car["price"])
-                                /
-                                market_price
-                            ) * 100,
-                            1
-                        )
+                    await send_car(
+                        car,
+                        discount
+                    )
 
 
-                        await send_car(
-                            car,
-                            discount
-                        )
+                    save_car(
+                        car["link"],
+                        car["title"],
+                        car["price"]
+                    )
 
 
-                        save_car(
-                            car["link"],
-                            car["title"],
-                            car["price"]
-                        )
-
-
-        except Exception as e:
-
-            print(
-                "Ошибка:",
-                e
-            )
-
-
-        await asyncio.sleep(30)
+        await asyncio.sleep(
+            30
+        )
 
 
 
