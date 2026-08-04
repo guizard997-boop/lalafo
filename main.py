@@ -26,7 +26,7 @@ dp = Dispatcher()
 
 
 # ВСТАВЬ СЮДА СВОЙ TELEGRAM ID
-YOUR_CHAT_ID = 123456789
+YOUR_CHAT_ID = 8078921787
 
 
 
