@@ -13,7 +13,7 @@ dp = Dispatcher()
 
 
 # ВСТАВЬ СЮДА СВОЙ TELEGRAM ID
-YOUR_CHAT_ID = 123456789
+YOUR_CHAT_ID = 8078921787
 
 
 async def send_car(car):
@@ -31,7 +31,7 @@ async def send_car(car):
 """
 
     await bot.send_message(
-        YOUR_CHAT_ID = 8078921787
+        YOUR_CHAT_ID,
         text
     )
 
