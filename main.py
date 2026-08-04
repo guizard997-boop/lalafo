@@ -19,49 +19,59 @@ from database import (
 
 
 bot = Bot(
-    BOT_TOKEN
+    token=BOT_TOKEN
 )
 
 dp = Dispatcher()
 
 
 # ВСТАВЬ СЮДА СВОЙ TELEGRAM ID
-YOUR_CHAT_ID = 8078921787
+YOUR_CHAT_ID = 123456789
 
 
 
 async def send_car(car, discount_value):
 
     text = f"""
-🚗 {car['title']}
+🚗 {car.get('title', 'Без названия')}
 
 💰 Цена:
-{car['price']} сом
+{car.get('price', 0)} сом
 
 📉 Ниже рынка:
 {discount_value}%
 
 🛃 Растаможка:
-{"✅ Да" if car['customs'] else "❓ Не указано"}
+{"✅ Да" if car.get('customs') else "❓ Не указано"}
 
 🔗 Ссылка:
-{car['link']}
+{car.get('link', '')}
 """
 
 
-    if car.get("photo"):
+    try:
 
-        await bot.send_photo(
-            chat_id=YOUR_CHAT_ID,
-            photo=car["photo"],
-            caption=text
-        )
+        if car.get("photo"):
 
-    else:
+            await bot.send_photo(
+                chat_id=YOUR_CHAT_ID,
+                photo=car["photo"],
+                caption=text
+            )
 
-        await bot.send_message(
-            chat_id=YOUR_CHAT_ID,
-            text=text
+        else:
+
+            await bot.send_message(
+                chat_id=YOUR_CHAT_ID,
+                text=text
+            )
+
+
+    except Exception as e:
+
+        print(
+            "Ошибка отправки:",
+            e
         )
 
 
@@ -78,8 +88,6 @@ async def check_cars():
             for car in cars:
 
 
-                # проверка, новое ли объявление
-
                 if not is_new(
                     car["link"]
                 ):
@@ -87,22 +95,16 @@ async def check_cars():
 
 
 
-                # ищем похожие машины
-
                 similar_prices = find_similar_cars(
                     car,
                     cars
                 )
 
 
-                # считаем рынок
-
                 market_price = calculate_market_price(
                     similar_prices
                 )
 
-
-                # считаем скидку
 
                 discount_value = discount(
                     car["price"],
@@ -110,8 +112,6 @@ async def check_cars():
                 )
 
 
-
-                # отправляем только дешевле рынка на 15%+
 
                 if discount_value >= 15:
 
@@ -132,10 +132,9 @@ async def check_cars():
         except Exception as e:
 
             print(
-                "Ошибка:",
+                "Ошибка проверки:",
                 e
             )
-
 
 
         await asyncio.sleep(
