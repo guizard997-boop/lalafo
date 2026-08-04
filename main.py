@@ -6,38 +6,48 @@ from config import BOT_TOKEN
 
 from parser.lalafo import get_lalafo_cars
 
-from parser.market import get_market_price
+from parser.car_analysis import (
+    find_similar_cars,
+    calculate_market_price,
+    discount
+)
 
-from analyzer import is_good_offer, discount_percent
-
-from database import is_new, save_car
-
+from database import (
+    is_new,
+    save_car
+)
 
 
 bot = Bot(
     BOT_TOKEN
 )
 
-
 dp = Dispatcher()
 
 
-
+# Замени на свой Telegram ID
 YOUR_CHAT_ID = 123456789
 
 
 
-async def send_car(car, discount):
+async def send_car(car, discount_value):
 
     text = f"""
-🚗 Автомобиль найден
+🚗 Найден автомобиль
 
 {car['title']}
 
-📉 Ниже рынка:
-{discount}%
+💰 Цена:
+{car['price']} сом
 
-🔗 {car['link']}
+📉 Ниже рынка:
+{discount_value}%
+
+🛃 Растаможка:
+Проверяется
+
+🔗 Ссылка:
+{car['link']}
 """
 
 
@@ -52,49 +62,44 @@ async def check_cars():
 
     while True:
 
-        cars = await get_lalafo_cars()
+        try:
+
+            cars = await get_lalafo_cars()
 
 
-        prices = []
+            for car in cars:
 
 
-        for car in cars:
+                if not is_new(
+                    car["link"]
+                ):
+                    continue
 
-            if car["price"]:
 
-                prices.append(
-                    car["price"]
+
+                similar_prices = find_similar_cars(
+                    car,
+                    cars
                 )
 
 
-        market_price = get_market_price(
-            prices
-        )
+                market_price = calculate_market_price(
+                    similar_prices
+                )
 
 
-        for car in cars:
-
-
-            if is_new(
-                car["link"]
-            ):
-
-
-                if is_good_offer(
+                discount_value = discount(
                     car["price"],
                     market_price
-                ):
+                )
 
 
-                    discount = discount_percent(
-                        car["price"],
-                        market_price
-                    )
+                if discount_value >= 15:
 
 
                     await send_car(
                         car,
-                        discount
+                        discount_value
                     )
 
 
@@ -103,6 +108,14 @@ async def check_cars():
                         car["title"],
                         car["price"]
                     )
+
+
+        except Exception as e:
+
+            print(
+                "Ошибка:",
+                e
+            )
 
 
         await asyncio.sleep(
@@ -126,4 +139,6 @@ async def main():
 
 if __name__ == "__main__":
 
-    asyncio.run(main())
+    asyncio.run(
+        main()
+    )
