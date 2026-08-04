@@ -10,7 +10,7 @@ bot = Bot(BOT_TOKEN)
 dp = Dispatcher()
 
 
-async def check_cars():
+from parser.lalafo import get_lalafo_cars
 
     while True:
 
