@@ -25,7 +25,7 @@ bot = Bot(
 dp = Dispatcher()
 
 
-# Замени на свой Telegram ID
+# ВСТАВЬ СЮДА СВОЙ TELEGRAM ID
 YOUR_CHAT_ID = 123456789
 
 
@@ -33,9 +33,7 @@ YOUR_CHAT_ID = 123456789
 async def send_car(car, discount_value):
 
     text = f"""
-🚗 Найден автомобиль
-
-{car['title']}
+🚗 {car['title']}
 
 💰 Цена:
 {car['price']} сом
@@ -44,17 +42,27 @@ async def send_car(car, discount_value):
 {discount_value}%
 
 🛃 Растаможка:
-Проверяется
+{"✅ Да" if car['customs'] else "❓ Не указано"}
 
 🔗 Ссылка:
 {car['link']}
 """
 
 
-    await bot.send_message(
-        YOUR_CHAT_ID,
-        text
-    )
+    if car.get("photo"):
+
+        await bot.send_photo(
+            chat_id=YOUR_CHAT_ID,
+            photo=car["photo"],
+            caption=text
+        )
+
+    else:
+
+        await bot.send_message(
+            chat_id=YOUR_CHAT_ID,
+            text=text
+        )
 
 
 
@@ -70,6 +78,8 @@ async def check_cars():
             for car in cars:
 
 
+                # проверка, новое ли объявление
+
                 if not is_new(
                     car["link"]
                 ):
@@ -77,22 +87,31 @@ async def check_cars():
 
 
 
+                # ищем похожие машины
+
                 similar_prices = find_similar_cars(
                     car,
                     cars
                 )
 
 
+                # считаем рынок
+
                 market_price = calculate_market_price(
                     similar_prices
                 )
 
+
+                # считаем скидку
 
                 discount_value = discount(
                     car["price"],
                     market_price
                 )
 
+
+
+                # отправляем только дешевле рынка на 15%+
 
                 if discount_value >= 15:
 
@@ -116,6 +135,7 @@ async def check_cars():
                 "Ошибка:",
                 e
             )
+
 
 
         await asyncio.sleep(
