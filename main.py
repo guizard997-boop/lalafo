@@ -4,22 +4,26 @@ from aiogram import Bot, Dispatcher
 
 from config import BOT_TOKEN
 
+from parser.lalafo import get_lalafo_cars
 
 bot = Bot(BOT_TOKEN)
 
 dp = Dispatcher()
 
 
-from parser.lalafo import get_lalafo_cars
+async def check_cars():
 
     while True:
 
-        # Здесь позже подключим Lalafo
+        cars = await get_lalafo_cars()
 
-        print("Проверка объявлений...")
+        for car in cars:
+            print(
+                car["title"],
+                car["link"]
+            )
 
         await asyncio.sleep(30)
-
 
 async def main():
 
